@@ -1,0 +1,191 @@
+version: "3.9"
+
+# ────────────────────────────────────────────────────────────────────────────
+# 폐쇄망 Claude-like 인터페이스 스택
+#
+# 서비스 구성:
+#   postgres    - LiteLLM 사용량·팀·키 관리용 DB
+#   vllm        - 내부 LLM 서빙 (GPU 필요, 선택)
+#   ollama      - 경량 CPU/GPU 서빙 (선택)
+#   litellm     - OpenAI-compatible 프록시·라우터
+#   open-webui  - Claude 유사 채팅 UI
+#   nginx       - 리버스 프록시 (TLS termination)
+# ────────────────────────────────────────────────────────────────────────────
+
+networks:
+  internal:
+    driver: bridge
+    internal: true          # 인터넷 차단 — 폐쇄망 보안
+  frontend:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  ollama_data:
+  open_webui_data:
+
+services:
+
+  # ── PostgreSQL ─────────────────────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER:     "${POSTGRES_USER:-litellm}"
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}"
+      POSTGRES_DB:       "${POSTGRES_DB:-litellm}"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - internal
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-litellm}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── vLLM (GPU 서버, 선택적 활성화) ────────────────────────────────────────
+  # GPU 없이 테스트할 경우 이 블록을 주석 처리하세요
+  vllm:
+    image: vllm/vllm-openai:latest
+    restart: unless-stopped
+    volumes:
+      - "${MODEL_PATH:-/models}:/models:ro"
+    environment:
+      - HUGGING_FACE_HUB_TOKEN=${HF_TOKEN:-}
+    command: >
+      --model /models/${VLLM_MODEL_NAME:-gptoss-120b}
+      --host 0.0.0.0
+      --port 8000
+      --tensor-parallel-size ${TENSOR_PARALLEL_SIZE:-1}
+      --max-model-len ${MAX_MODEL_LEN:-8192}
+      --dtype ${VLLM_DTYPE:-auto}
+    networks:
+      - internal
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8000/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
+
+  # ── Ollama (경량 서버) ──────────────────────────────────────────────────────
+  ollama:
+    image: ollama/ollama:latest
+    restart: unless-stopped
+    volumes:
+      - ollama_data:/root/.ollama
+    networks:
+      - internal
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:11434/api/tags || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  # ── LiteLLM Proxy ──────────────────────────────────────────────────────────
+  litellm:
+    image: ghcr.io/berriai/litellm:main-latest
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./litellm/config.yaml:/app/config.yaml:ro
+    environment:
+      # 설정 파일 내 ${VAR} 치환에 사용됨
+      VLLM_API_BASE:      "http://vllm:8000/v1"
+      VLLM_API_KEY:       "${VLLM_API_KEY:-internal}"
+      OLLAMA_API_BASE:    "http://ollama:11434"
+      LITELLM_MASTER_KEY: "${LITELLM_MASTER_KEY}"
+      DATABASE_URL:       "postgresql://${POSTGRES_USER:-litellm}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-litellm}"
+
+      # Rebellions ATOM 사용 시 주석 해제
+      # REBEL_ATOM_API_BASE: "${REBEL_ATOM_API_BASE}"
+      # REBEL_ATOM_API_KEY:  "${REBEL_ATOM_API_KEY}"
+
+      # 관찰성 (선택)
+      # LANGFUSE_PUBLIC_KEY: "${LANGFUSE_PUBLIC_KEY}"
+      # LANGFUSE_SECRET_KEY: "${LANGFUSE_SECRET_KEY}"
+      # LANGFUSE_HOST:       "http://langfuse:3000"
+    command: ["--config", "/app/config.yaml", "--port", "4000", "--num_workers", "4"]
+    networks:
+      - internal
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:4000/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # ── Open WebUI (Claude 유사 인터페이스) ────────────────────────────────────
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:main
+    restart: unless-stopped
+    depends_on:
+      litellm:
+        condition: service_healthy
+    volumes:
+      - open_webui_data:/app/backend/data
+    environment:
+      # LiteLLM 프록시를 OpenAI 엔드포인트로 지정
+      OPENAI_API_BASE_URL:  "http://litellm:4000/v1"
+      OPENAI_API_KEY:       "${LITELLM_MASTER_KEY}"
+
+      # Ollama 직접 연결 비활성화 (LiteLLM 경유)
+      OLLAMA_BASE_URL:      ""
+      ENABLE_OLLAMA_API:    "false"
+
+      # 기본 설정
+      DEFAULT_MODELS:       "${DEFAULT_MODEL:-gptoss-120b}"
+      WEBUI_NAME:           "${WEBUI_NAME:-사내 AI 어시스턴트}"
+      WEBUI_SECRET_KEY:     "${WEBUI_SECRET_KEY}"
+
+      # 회원가입 제한 (초대 코드 또는 관리자 승인 방식)
+      ENABLE_SIGNUP:        "${ENABLE_SIGNUP:-false}"
+      DEFAULT_USER_ROLE:    "user"
+
+      # LDAP/OAuth SSO (AD 연동 시 활성화)
+      # ENABLE_OAUTH_SIGNUP:  "true"
+      # OAUTH_CLIENT_ID:      "${OAUTH_CLIENT_ID}"
+      # OAUTH_CLIENT_SECRET:  "${OAUTH_CLIENT_SECRET}"
+      # OPENID_PROVIDER_URL:  "${OPENID_PROVIDER_URL}"
+
+    networks:
+      - internal
+      - frontend
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8080/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # ── Nginx 리버스 프록시 ────────────────────────────────────────────────────
+  nginx:
+    image: nginx:1.27-alpine
+    restart: unless-stopped
+    depends_on:
+      open-webui:
+        condition: service_healthy
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./nginx/certs:/etc/nginx/certs:ro   # TLS 인증서 마운트 경로
+    ports:
+      - "80:80"
+      - "443:443"
+    networks:
+      - frontend
+    healthcheck:
+      test: ["CMD-SHELL", "nginx -t && curl -sf http://localhost/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3

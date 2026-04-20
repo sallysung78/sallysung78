@@ -1,0 +1,74 @@
+model_list:
+  # ── 기본 모델: Rebellions ATOM / 내부 GPU 서버 ──────────────────────────────
+  - model_name: gptoss-120b
+    litellm_params:
+      model: openai/gptoss-120b
+      api_base: "${VLLM_API_BASE}"        # 예: http://vllm-server:8000/v1
+      api_key: "${VLLM_API_KEY}"
+      timeout: 120
+      stream_timeout: 300
+
+  - model_name: gptoss-13b
+    litellm_params:
+      model: openai/gptoss-13b
+      api_base: "${VLLM_API_BASE}"
+      api_key: "${VLLM_API_KEY}"
+      timeout: 60
+      stream_timeout: 180
+
+  # ── Ollama (경량 CPU/GPU 서버) ───────────────────────────────────────────────
+  - model_name: llama3-70b
+    litellm_params:
+      model: ollama/llama3:70b
+      api_base: "${OLLAMA_API_BASE}"      # 예: http://ollama-server:11434
+      timeout: 120
+
+  - model_name: llama3-8b
+    litellm_params:
+      model: ollama/llama3:8b
+      api_base: "${OLLAMA_API_BASE}"
+      timeout: 60
+
+  # ── Rebellions ATOM 전용 엔드포인트 (OpenAI-compatible) ─────────────────────
+  # ATOM 서버가 직접 OpenAI API를 노출하는 경우 아래 블록을 활성화하세요
+  # - model_name: rebel-atom
+  #   litellm_params:
+  #     model: openai/rebel-atom
+  #     api_base: "${REBEL_ATOM_API_BASE}" # 예: http://rebel-atom-server:8080/v1
+  #     api_key: "${REBEL_ATOM_API_KEY}"
+
+router_settings:
+  # 장애 발생 시 자동 폴백: gptoss-120b → llama3-70b
+  fallbacks:
+    - gptoss-120b: ["llama3-70b"]
+    - gptoss-13b:  ["llama3-8b"]
+  allowed_fails: 3
+  retry_after: 10
+
+litellm_settings:
+  # 요청/응답 로깅 (선택)
+  # success_callback: ["langfuse"]
+  # failure_callback: ["langfuse"]
+
+  # 전역 타임아웃 (초)
+  request_timeout: 600
+
+  # 스트리밍 응답 활성화
+  set_verbose: false
+
+  # 입출력 토큰 드롭 방지
+  drop_params: false
+
+general_settings:
+  master_key: "${LITELLM_MASTER_KEY}"
+  database_url: "${DATABASE_URL}"         # PostgreSQL: 사용량·비용 추적용
+
+  # UI 포털 활성화 (http://litellm:4000/ui)
+  ui_access_mode: "all"
+
+  # 팀별 키 관리 활성화
+  store_model_in_db: true
+
+  # 속도 제한 (전체)
+  global_rpm_limit: 500
+  global_tpm_limit: 1000000
