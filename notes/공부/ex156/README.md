@@ -7,6 +7,7 @@
 - [시험정보-상세정리.md](시험정보-상세정리.md) — 전 영역 상세 레퍼런스 (명령어·manifest 모음)
 - [3일플랜-상세.md](3일플랜-상세.md) — 상세 3일 플랜 (전체 설명 버전)
 - [클러스터접속-CLI설치-Lab1.md](클러스터접속-CLI설치-Lab1.md) — 시험 시작 직후 사전 준비: 클러스터 접속(토큰/웹 로그인), 상태 점검(node/csr/co), kubectl CLI 설치(체크섬), oc vs kubectl(Lab1)
+- [5장-스토리지-개념정리.md](5장-스토리지-개념정리.md) 🔰 — 스토리지 약점(33%) 기초: SC/PVC/PV/DataVolume 비유로 이해, source 4종(URL/upload/clone/blank), 골든이미지, 콘솔 vs CLI 전략
 
 ## 핵심 한 줄
 스토리지 **"URL=import / gz=upload"** 분기만 몸에 배면 33% → 70%대 거의 확정.
