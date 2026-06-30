@@ -40,7 +40,20 @@
 | 5.3 디스크 관리 | 인터페이스: **SCSI=핫플러그**(`sdX`)/VirtIO(`vdX`,중지) / **persistent**(Make persistent+재부팅) 🎯 / resize=**확장만**(`xfs_growfs`) |
 | 5.5 export/import | 🎯 `virtctl vmexport download`(CLI필수) → `image-upload dv` → `create vm --volume-pvc` |
 | 5.7 스냅샷 | 🎯 생성=실행중 OK(게스트에이전트 freeze) / **복원=VM 중지** / 복원=스냅샷 시점 구성 리셋 |
-| 5.9 복제 | 🎯 **봉인(`virt-sysprep -a /dev/vda`, CLI필수)** → **Clone**(콘솔) |
+| 5.9 복제 | 🎯 **봉인(준비) → Clone(복제)** 순서! (아래 박스) |
+
+> ### 🥇 골든이미지 = 봉인 → 복제 (순서 헷갈림 주의)
+> ```
+> ① VM 중지                         (oc get vm → Stopped)
+> ② virtctl guestfs <볼륨>          ← 디스크 여는 "도구/통로"
+> ③   virt-sysprep -a /dev/vda      ← 그 안에서 "봉인"(고유정보 제거) ★진짜 작업
+> ④   exit                          ← 봉인 끝, VM 시작 금지!
+> ⑤ Clone (콘솔: Actions→Clone)     ← 복제는 그 "다음"
+> ```
+> - **guestfs = 봉인하려고 디스크 여는 도구** / **virt-sysprep = 봉인 작업 자체** (한 세트)
+> - **봉인 = 복제 전 사전작업** (머신ID·SSH키 지워서 복제본 충돌 방지)
+> - 🔴 ②③④ = **CLI 필수**(콘솔 불가) / ⑤ Clone = 콘솔
+
 > 🔑 🎯**URL=import / gz=upload** / 🎯봉인·export=CLI필수 / 복원·봉인=중지 / 🎯persistent
 
 ---
