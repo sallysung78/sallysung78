@@ -9,6 +9,7 @@
 - [네트워킹-개념정리.md](네트워킹-개념정리.md) 🔰 — 네트워킹(약점50%): 네트워크 구조도, Pod net/UDN, 서비스 4종, Route(TLS 3종), **virtctl expose vm**
 - [5장-스토리지-Lab문제풀이.md](5장-스토리지-Lab문제풀이.md) 🧪 — 스토리지 Lab 7문제: 문제별 CLI/콘솔 + 외울 것
 - [VM운영-Lab문제풀이.md](VM운영-Lab문제풀이.md) 🧪 — VM 운영 Lab 5문제: 생성·cloud-init·virtctl ssh·Metrics·리소스 증설
+- [명령어-정리.md](명령어-정리.md) 📇 — virtctl / oc / 그밖의 명령어 (폴더 전체 추출·중복제거)
 
 ## 🗂️ old/ (참고용·중복 보관)
 - `3일플랜-상세.md` — 3일 플랜 풀버전 (합격플랜과 중복)
