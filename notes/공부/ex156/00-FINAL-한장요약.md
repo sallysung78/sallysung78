@@ -51,8 +51,23 @@
 | 5.1 퍼시스턴트 | **SC**(메뉴)→**PVC**(주문)→**PV**(그릇), **DataVolume**=PVC+이미지 채움 / **source 4종**(http·upload·pvc·blank) 🎯 / **RWX=라이브 마이그레이션** / VM디스크=Block 권장 |
 | 5.3 디스크 관리 | 인터페이스: **SCSI=핫플러그**(`sdX`)/VirtIO(`vdX`,중지) / **persistent**(Make persistent+재부팅) 🎯 / resize=**확장만**(`xfs_growfs`) |
 | 5.5 export/import | 🎯 `virtctl vmexport download`(CLI필수) → `image-upload dv` → `create vm --volume-pvc` |
-| 5.7 스냅샷 | 🎯 생성=실행중 OK(게스트에이전트 freeze) / **복원=VM 중지** / 복원=스냅샷 시점 구성 리셋 |
+| 5.7 스냅샷 | 🎯 생성=실행중 OK(게스트에이전트 freeze) / **복원=VM 중지** / 복원=스냅샷 시점 구성 리셋 (아래 박스) |
 | 5.9 복제 | 🎯 **봉인(준비) → Clone(복제)** 순서! (아래 박스) |
+
+> ### 📸 스냅샷 → 변경 → 복원 절차 (순서 중요)
+> ```
+> ① 스냅샷 생성 (콘솔 Snapshots→Take snapshot)   ← 실행 중 OK
+> ② VM 접속: virtctl console <vm>  (SSH키 없으면 console!)  → 로그인
+> ③   touch ~/update_failed.txt    ← 흔적(변경) 만들기 → exit(Ctrl+])
+> ④ 🔴 VM 중지: virtctl stop <vm>   ← ★복원 전 필수! (자주 빠뜨림)
+> ⑤ 복원: 콘솔 Snapshots → ⋮ → Restore
+> ⑥ VM 기동: virtctl start <vm>
+> ⑦ 다시 접속 → update_failed.txt 사라졌나 확인 ✅
+> ```
+> ⚠️ **주의점**
+> - 🔴 **복원(Restore) = VM 중지 필수** (생성은 켜둔 채 OK, 복원만 꺼야 함)
+> - 접속: `virtctl ssh <user>@<vm이름>`(IP 아님!) / SSH키 없으면 **`virtctl console <vm>`**(비번)
+> - 검증은 **파일 존재 여부**로: 스냅샷 **후** 만든 파일 → 복원하면 **사라짐**(정상). "전/후" 순서 두 번 읽기.
 
 > ### 🥇 골든이미지 = 봉인 → 복제 (순서 헷갈림 주의)
 > ```
