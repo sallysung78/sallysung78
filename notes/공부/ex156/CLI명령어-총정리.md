@@ -165,7 +165,6 @@ oc explain dv.spec                     # 리소스 스펙 필드 설명
 oc label pod virt-launcher-<...> <key>=<val>
 oc adm ...                             # 클러스터 관리(adm)
 oc get csr                             # 인증서 승인 대기 확인
-oc run mypod -it --rm --image=rhel8/toolbox   # 임시 테스트 포드(DNS 확인 등)
 ```
 
 ## 7. 도움말
