@@ -1,0 +1,88 @@
+{
+  "_comment": "회사별 공고/입찰 게시판 레지스트리. listUrl = 목록 페이지, login=true 는 로그인/승인 필요(에이전트가 접근 불가, 참고용). note 는 수집 시 주의사항.",
+  "groups": {
+    "KB": {
+      "label": "KB금융그룹",
+      "companies": [
+        {
+          "id": "kb-bank",
+          "name": "KB국민은행",
+          "listUrl": "https://obank.kbstar.com/quics?page=C018592&boardId=648",
+          "altUrl": "https://omoney.kbstar.com/quics?page=C018592&boardId=648",
+          "login": false,
+          "note": "사이버홍보관 공지사항 게시판에 구매/입찰 공고가 함께 올라옴. 제목 기준 입찰/구매/용역 필터 필요."
+        },
+        {
+          "id": "kb-card",
+          "name": "KB국민카드",
+          "listUrl": "https://egume.kbcard.com/",
+          "altUrl": "https://biz.kbcard.com/CXERCEPC0007.cms",
+          "login": true,
+          "note": "e-구매시스템. 공개입찰 목록 일부는 비로그인 조회 가능할 수 있으나 상세는 로그인 필요할 수 있음."
+        },
+        {
+          "id": "kb-sec",
+          "name": "KB증권",
+          "listUrl": "https://www.kbsec.com/",
+          "login": false,
+          "note": "공식사이트 내 '경영공시/입찰/구매' 섹션 진입 경로 확인 필요. 정확한 게시판 URL은 첫 실행 시 에이전트가 탐색."
+        },
+        {
+          "id": "kb-life",
+          "name": "KB라이프생명",
+          "listUrl": "https://www.kblife.co.kr/customer-common/purchaseBiddingPublicNoticeOffice.do",
+          "login": false,
+          "note": "구매입찰공시실. 공개 목록."
+        },
+        {
+          "id": "kb-life-legacy",
+          "name": "KB생명(구)/통합 안내",
+          "listUrl": "https://www.kblife.co.kr/customer-common/purchaseBiddingPublicNoticeOffice.do",
+          "login": false,
+          "note": "KB생명은 KB라이프생명으로 통합. 동일 공시실 사용."
+        }
+      ]
+    },
+    "WOORI": {
+      "label": "우리금융그룹",
+      "companies": [
+        {
+          "id": "woori-bank",
+          "name": "우리은행",
+          "listUrl": "https://spot.wooribank.com/pot/Dream?withyou=BPPBC0011",
+          "altUrl": "https://epro.wooribank.com/index_ict.jsp",
+          "login": false,
+          "note": "spot 공고 게시판(공개) + epro IT전자입찰시스템(상세는 로그인일 수 있음)."
+        },
+        {
+          "id": "woori-card",
+          "name": "우리카드",
+          "listUrl": "https://sccd.wooribank.com/ccd/Dream?withyou=CDCNT0393",
+          "login": false,
+          "note": "우리카드 공고 게시판."
+        },
+        {
+          "id": "woori-sec",
+          "name": "우리투자증권",
+          "listUrl": "https://www.wooriib.com/",
+          "login": false,
+          "note": "우리투자증권 공식사이트 내 공고/입찰 섹션. 정확 URL 첫 실행 시 탐색."
+        },
+        {
+          "id": "dongyang-life",
+          "name": "동양생명",
+          "listUrl": "https://www.myangel.co.kr/",
+          "login": false,
+          "note": "동양생명 공식사이트 내 공고/구매입찰 섹션. 정확 URL 첫 실행 시 탐색."
+        },
+        {
+          "id": "abl-life",
+          "name": "ABL생명보험",
+          "listUrl": "https://www.abllife.co.kr/",
+          "login": false,
+          "note": "ABL생명 공식사이트 내 공고/입찰 섹션. 정확 URL 첫 실행 시 탐색."
+        }
+      ]
+    }
+  }
+}

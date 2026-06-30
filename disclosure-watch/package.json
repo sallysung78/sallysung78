@@ -1,0 +1,18 @@
+{
+  "name": "disclosure-watch",
+  "version": "0.1.0",
+  "type": "module",
+  "private": true,
+  "description": "KB·우리금융 IT 사업공고 일일 추적 하네스 (수집·검증 에이전트 + 결정론적 diff/리포트/알림)",
+  "scripts": {
+    "test": "node --test",
+    "report": "node bin/diff-report.mjs",
+    "demo": "node bin/diff-report.mjs test/fixtures/candidates.sample.json --date 2026-06-30 --window '2026-06-29 09:00 ~ 2026-06-30 09:00 KST'"
+  },
+  "dependencies": {
+    "playwright": "^1.56.0"
+  },
+  "optionalDependencies": {
+    "nodemailer": "^6.9.0"
+  }
+}
