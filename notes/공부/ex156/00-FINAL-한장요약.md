@@ -50,8 +50,19 @@
 | --- | --- |
 | 5.1 퍼시스턴트 | **SC**(메뉴)→**PVC**(주문)→**PV**(그릇), **DataVolume**=PVC+이미지 채움 / **source 4종**(http·upload·pvc·blank) 🎯 / **RWX=라이브 마이그레이션** / VM디스크=Block 권장 |
 | 5.3 디스크 관리 | 인터페이스: **SCSI=핫플러그**(`sdX`)/VirtIO(`vdX`,중지) / **persistent**(Make persistent+재부팅) 🎯 / resize=**확장만**(`xfs_growfs`) |
-| 5.5 export/import | 🎯 `virtctl vmexport download`(CLI필수) → `image-upload dv` → `create vm --volume-pvc` |
+| 5.5 export/import | 🎯 `virtctl vmexport download`(CLI필수) → `image-upload dv` → `create vm --volume-pvc` (아래 박스) |
 | 5.7 스냅샷 | 🎯 생성=실행중 OK(게스트에이전트 freeze) / **복원=VM 중지** / 복원=스냅샷 시점 구성 리셋 (아래 박스) |
+
+> ### 📤 Export → 아카이빙 → VM 삭제 절차 (CLI 필수, 콘솔 불가)
+> ```
+> ① VM 중지: virtctl stop <vm>       ← 일관성 (실행 중이면 export가 Pending)
+> ② virtctl vmexport download <VME이름> --vm=<vm> --volume=<vol> --output=<파일>.img.gz
+> ③ oc delete vm <vm>                ← export 끝난 "다음" 삭제!
+> ```
+> ⚠️ **주의점**
+> - 첫 인자 `<VME이름>` = **export 객체 이름**(작업 이름표, 아무거나 OK) ≠ `--vm=`(원본 VM) — 이름 같아도 역할 다름
+> - 🔴 **순서: export 완료 → 그 다음 삭제** (먼저 지우면 디스크 사라짐!)
+> - `/home/student`에 저장하라면 → `--output=/home/student/dev-server-disk.img.gz`
 | 5.9 복제 | 🎯 **봉인(준비) → Clone(복제)** 순서! (아래 박스) |
 
 > ### 📸 스냅샷 → 변경 → 복원 절차 (순서 중요)
