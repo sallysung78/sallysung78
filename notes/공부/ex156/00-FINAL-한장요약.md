@@ -16,8 +16,20 @@
 | 3.7 CLI 생성·접속 | `virtctl create vm` / `virtctl ssh·console·vnc` |
 | 3.9 모니터링 | **Metrics 탭**(CPU/Mem), Console **OOM** 확인, 리소스 증설=**InstanceType 변경**(재부팅) |
 - 🎯 **cloud-init**: 계정·비번 / **SSH키=Public SSH key 필드** / **부팅 서비스=`runcmd: - systemctl enable --now <svc>`**
+
+> ### ⭐ VM 생성 순서 (SSH+cloud-init) — 이 순서 지켜야 접속됨! (실측)
+> ```
+> ① 첫 생성 페이지: 부팅볼륨 + InstanceType + 디스크 크기
+> ② 같은 페이지에서 Public SSH key → "Add new" → lab_rsa.pub 등록
+> ③ Customize VirtualMachine → Scripts(Initial run) → cloud-init에 runcmd 추가:
+>      runcmd:
+>        - systemctl enable --now <svc>
+> ④ Create
+> ```
+> 🔴 **SSH키(②)와 cloud-init(③)을 둘 다 생성 시 넣고 → Create** 해야 첫 부팅부터 SSH 접속·서비스 정상. (생성 후 따로 안 해도 됨 / 만들고 나서 cloud-init 바꾸면 재생성 필요)
+
 - 검증: `virtctl ssh rhel@<vm>` → `sudo systemctl status <svc>` / `journalctl -u <svc> -p notice --since "1m ago"`
-> 🔑 VM=정의·VMI=실행 / 🎯부팅소스 4종(URL/gz) / 🎯cloud-init(키+서비스) / 증설=InstanceType
+> 🔑 VM=정의·VMI=실행 / 🎯부팅소스 4종(URL/gz) / 🎯cloud-init(키+서비스, 생성 시 함께) / 증설=InstanceType
 
 ## 📘 Chapter 4 — 네트워킹 (약점 50%)
 | 섹션 | 핵심 |
