@@ -1,40 +1,24 @@
-# 📗 EX294 (RHCE - Ansible) 시험 준비 자료
+# 📗 EX294 (RHCE - Ansible) 시험 준비
 
-> 목표: **연말까지 합격** (합격선 210/300)
-> 지난 응시(2026-06-26): **119점 (57%)** → 불합격, +91점 필요
-> 핵심 진단: 지식보다 **"손에 익히기" 부족** — 랩 반복으로 근육 기억 만들기
+> 기반: 구글 슬라이드 공부노트 ([원본](https://docs.google.com/presentation/d/1NJUD3s0FF6vP7wa4S-ze8WrRtt5ZfuLIQkYHYalS5BA/edit))
+> 참고 풀이: aingface.tistory.com/103
+> 여기 정리된 문제들이 **기출문제** 기준
 
----
+## 📂 파일 구성 (요청한 4분류)
 
-## 🎯 약점 우선순위 (지난 시험 영역별 점수)
+1. **[01-개념.md](01-개념.md)** — 시험 전체를 관통하는 핵심 개념 (인벤토리·플레이북 뼈대·facts·롤·vault·block/rescue·when 등)
+2. **[02-외워야할-명령어.md](02-외워야할-명령어.md)** — 무조건 손에 익혀야 하는 명령어 (설치·galaxy·vault·검증)
+3. **[03-모듈과-역할.md](03-모듈과-역할.md)** — 외워야 할 모듈 + 시스템 역할(role) + 기출 18문제 매핑
+4. **[04-시험중-참고-리스트.md](04-시험중-참고-리스트.md)** — `ansible-doc`·`setup`(facts) 등 시험장에서 **찾아 쓰는** 것들
 
-| 우선 | 영역 | 점수 | 집중 파일 |
-|:---:|------|:---:|------|
-| 🔴 1 | Manage content (콘텐츠 관리) | 33% | [05-콘텐츠관리-vault-템플릿.md](05-콘텐츠관리-vault-템플릿.md) |
-| 🔴 2 | Use modules for sysadmin tasks | 35% | [02-시스템관리-모듈-치트시트.md](02-시스템관리-모듈-치트시트.md) |
-| 🟠 3 | Understand core components | 38% | [01-핵심개념-정리.md](01-핵심개념-정리.md) |
-| 🟠 4 | Use Roles & Content Collections | 39% | [03-롤과-컬렉션.md](03-롤과-컬렉션.md) |
-| 🟡 5 | Create plays and playbooks | 45% | [04-플레이북-작성.md](04-플레이북-작성.md) |
-| ✅ | Install/configure control node | 100% | [00-환경구성-인벤토리.md](00-환경구성-인벤토리.md) (복습만) |
+## 🎯 핵심 전략 (슬라이드 정리)
 
----
+> 문제를 보면 **"완성 YAML"을 외우려 하지 말고**, 먼저 **"어떤 module/role 문서를 열지"** 를 잡는다.
+> `ansible-doc` 은 시험장의 검색 엔진. 변수명은 README에서 찾는다.
 
-## 📂 파일 목록
-
-- **[00-시험정보-출제비중.md](00-시험정보-출제비중.md)** — 시험 구성·채점·시간 배분·환경 팁
-- [00-환경구성-인벤토리.md](00-환경구성-인벤토리.md) — 제어노드 설치, ansible.cfg, 인벤토리, SSH/권한 (강점, 복습용)
-- [01-핵심개념-정리.md](01-핵심개념-정리.md) 🔰 — 변수/팩트/조건/반복/핸들러/태그/에러처리
-- **[02-시스템관리-모듈-치트시트.md](02-시스템관리-모듈-치트시트.md)** 🔴 — 패키지/서비스/방화벽/스토리지/사용자/cron/파일 모듈
-- [03-롤과-컬렉션.md](03-롤과-컬렉션.md) 🔴 — 롤 구조, ansible-galaxy, requirements.yml, 컬렉션
-- [04-플레이북-작성.md](04-플레이북-작성.md) — 플레이/태스크/블록/import vs include
-- **[05-콘텐츠관리-vault-템플릿.md](05-콘텐츠관리-vault-템플릿.md)** 🔴 — Vault, Jinja2 템플릿, 변수 우선순위
-- [명령어-치트시트.md](명령어-치트시트.md) 📇 — ansible / ansible-playbook / ansible-vault / galaxy 명령
-- `lab/` 🧪 — 영역별 랩 문제 풀이 모음
-
----
-
-## 핵심 한 줄 전략
-
-> **벼락치기 금지. 매주 꾸준히 랩 반복.** 시험은 "생각해서 푸는" 게 아니라
-> "손이 먼저 움직이는" 게임. `ansible-doc -l` / `ansible-doc <모듈>` 로
-> 모듈 옵션 빠르게 찾는 습관 + `--syntax-check` / `-C` 로 검증하는 습관.
+| 단계 | 행동 |
+|---|---|
+| 1 | 문제 키워드 → 모듈명/역할명 떠올리기 |
+| 2 | `ansible-doc <module>` 또는 role `README.md` 열기 |
+| 3 | EXAMPLE 복사 → 문제 요구 값만 수정 |
+| 4 | `ansible-playbook <file>.yml --syntax-check` → 실행 → `ansible all -m command -a` 검증 |
