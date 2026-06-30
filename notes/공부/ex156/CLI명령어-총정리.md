@@ -222,9 +222,19 @@ exit                                           # 컨테이너 나가기 (봉인 
 ```bash
 nc -vz <EXTERNAL-IP> 22                 # TCP 연결 확인(LoadBalancer 검증)
 curl http://<EXTERNAL-IP>:80            # HTTP 응답 확인
+curl --connect-timeout 3 http://<IP>    # 연결 안 되는지 빠르게 확인(격리 검증)
 ssh <user>@<EXTERNAL-IP>                # 외부에서 VM 접속(LB IP 등)
+ssh server.srv -J utility               # 점프 호스트(-J) 경유 접속
 scp <user>@<host>:/path/file.yaml .     # 파일 복사(Import 시 yaml 가져오기)
 getent hosts <svc>.<ns>.svc.cluster.local   # 포드 안에서 서비스 DNS 확인
+```
+
+## 3-1. DB 백업 (게스트/원격) — 보조 NIC 활용 예
+
+```bash
+# 외부 서버에서 VM DB를 보조 인터페이스 IP로 원격 백업
+mysqldump -v -h 192.168.51.15 -u devuser -p'developer' --all-databases > backup_db.sql
+#   -h 대상IP / -u 사용자 / -p'암호'(붙여씀) / --all-databases / > 파일로 저장
 ```
 
 ## 4. kubectl (= oc 하위호환) + CLI 설치
