@@ -148,7 +148,7 @@
 - **핫플러그 = SCSI** / **selector 지정 = Service YAML+재시작** / **RWX = 라이브 마이그레이션**
 - **콘솔 불가 = CLI 필수 2개**: ① 봉인 `virtctl guestfs`+`virt-sysprep -a /dev/vda` ② export `virtctl vmexport download`
 
-## ⭐ 무조건 외울 명령 (10줄)
+## ⭐ 무조건 외울 명령
 ```bash
 # 봉인(콘솔불가) 🎯
 virtctl guestfs <volume> ; virt-sysprep -a /dev/vda     # VM 중지 → exit → 시작금지
@@ -159,14 +159,14 @@ virtctl image-upload dv <dv> --size=10Gi --image-path=x.img.gz [-n <ns>]
 virtctl create vm --name=<vm> --volume-pvc=src:<dv> | oc apply -f -
 # 핫플러그(영속) 🎯
 virtctl addvolume <vm> --volume-name=<dv> --persist
-# FS 확장(VM 안)
-sudo xfs_growfs /dev/sda
-# 노출 + Route 🎯
-virtctl expose vm <vm> --name=<svc> --type=ClusterIP --port=80 --target-port=80
+# 노출 + Route 🎯  (① Service 만들고 → ② Route 붙이기 / Route는 HTTP·HTTPS 중 택1)
+virtctl expose vm <vm> --name=<svc> --type=ClusterIP --port=80 --target-port=80   # ① VM→Service
+#   ②-A 평문(HTTP) Route:
 oc expose service/<svc> --name=<route>
-oc create route edge --service <svc> --hostname <host>   # 암호화
-# 마이그레이션(핫플러그/SSH-over-LB 적용)
-virtctl migrate <vm>
+#   ②-B 암호화(HTTPS) Route: edge|passthrough|reencrypt 중 택1 (oc expose로는 암호화 X!)
+oc create route edge --service <svc> --hostname <host>
 ```
+> 💡 콘솔로도 되는 것(외울 필요 낮음): **마이그레이션**(Actions→Migration→Compute / `virtctl migrate <vm>`), **FS 확장**(VM Console 탭에서 `sudo xfs_growfs /dev/sda`), Route/Service/핫플러그.
+> 🔴 **진짜 콘솔 불가 = 봉인 + export 2개뿐.**
 
 > **한 줄 결론**: 스토리지 **URL=import/gz=upload** + 네트워킹 **웹=Route/비웹=LB** + **봉인·export는 CLI** + **SNO 재부팅** — 이 4개가 합격의 척추. 🔥 (🎯 = 기출)
