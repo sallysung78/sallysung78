@@ -63,6 +63,20 @@
 > - 첫 인자 `<VME이름>` = **export 객체 이름**(작업 이름표, 아무거나 OK) ≠ `--vm=`(원본 VM) — 이름 같아도 역할 다름
 > - 🔴 **순서: export 완료 → 그 다음 삭제** (먼저 지우면 디스크 사라짐!)
 > - `/home/student`에 저장하라면 → `--output=/home/student/dev-server-disk.img.gz`
+
+> ### 📥 복원(Restore) = gz 업로드 → VM 생성 (export의 반대)
+> ```
+> ① oc project <프로젝트>            ← 미리 전환하면 뒤에 -n 생략 가능
+> ② virtctl image-upload dv <DV명> --size=10Gi --image-path=<gz경로>
+> ③ virtctl create vm --name=<vm> --volume-pvc=src:<DV명> | oc apply -f -
+> ```
+> ⚠️ **주의점**
+> - 🔵 **VM 중지 없음!** (새 VM 만드는 거라 멈출 VM이 없음 ↔ export는 중지 O)
+> - ②는 **디스크(DV)만** 만듦 → ③ create vm 있어야 VM 생김. `src:`뒤 = ②의 DV 이름(이어짐)
+> - `virtctl create vm`은 **YAML 출력만** → **`| oc apply -f -` 한 줄로** 줘야 생성됨
+> - CLI 업로드 DV는 콘솔 부팅볼륨 목록에 안 뜸 → **CLI create vm이 확실** (콘솔이면 ②부터 Upload 마법사로)
+> - 끝나고 `oc get vm,vmi`, 안 켜졌으면 `virtctl start <vm>`
+
 | 5.9 복제 | 🎯 **봉인(준비) → Clone(복제)** 순서! (아래 박스) |
 
 > ### 📸 스냅샷 → 변경 → 복원 절차 (순서 중요)
