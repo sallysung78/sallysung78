@@ -4,7 +4,7 @@ Claude와 질문/답변하며 정리한 노트들을 한 곳에 모아둔 공간
 맥북·아이폰 어디서든 이 폴더를 보면 돼요.
 
 ## 📚 공부
-- [EX294 (RHCE-Ansible) 시험 준비](공부/ex294/README.md) ⭐ — 연말 합격 목표, 약점(콘텐츠관리·sysadmin모듈) 집중 + 랩 반복
+> EX294 자료는 `ClaudeProject/공부/EX294/` (github-project-folders 브랜치)로 이관되어 관리합니다.
 - EX156 (OpenShift Virtualization) — 별도 정리 (ex156 폴더)
 
 ---
