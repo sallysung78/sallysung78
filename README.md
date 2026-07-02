@@ -1,5 +1,10 @@
 # 폐쇄망 Claude-like AI 인터페이스
 
+> ⭐ **즐겨찾기 — [ClaudeProject 폴더 바로가기](https://github.com/sallysung78/sallysung78/tree/claude/github-project-folders-lg9ms6/ClaudeProject)**
+> 모바일/클로드로 작업하는 프로젝트 모음 (공부 · 요리 · 냉털 · 여행지 · 가족법인 · 레드햇 등)
+
+---
+
 인터넷이 차단된 내부망에서 Claude와 유사한 채팅 경험을 제공하는 스택입니다.
 
 ```
