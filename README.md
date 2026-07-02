@@ -1,3 +1,6 @@
+https://github.com/sallysung78/sallysung78/tree/claude/github-project-folders-lg9ms6/ClaudeProject
+
+
 # 폐쇄망 Claude-like AI 인터페이스
 
 인터넷이 차단된 내부망에서 Claude와 유사한 채팅 경험을 제공하는 스택입니다.
