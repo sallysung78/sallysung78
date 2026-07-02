@@ -17,6 +17,7 @@
 
 - [문제 1. Ansible 설치 및 초기 설정](문제풀이/01-Ansible설치-초기설정.md)
 - [문제 2. YUM Repository 연결](문제풀이/02-YUM-Repository연결.md)
+- [문제 15. 암호 자격 증명 모음 생성 (Vault)](문제풀이/15-암호자격증명모음생성.md) 🔴 최약점(Manage content) 대비
 
 ## 🎯 핵심 전략 (슬라이드 정리)
 
