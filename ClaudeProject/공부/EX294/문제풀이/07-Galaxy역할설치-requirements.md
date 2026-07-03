@@ -26,12 +26,13 @@
 
 ### `/home/user/ansible/roles/requirements.yml`
 ```yaml
----
 - ______: balancer                                       ← name
   ______: http://ansible.galaxy.com/materials/haproxy.tar ← src
 - name: phpinfo
   src: http://ansible.galaxy.com/materials/phpinfo.tar
 ```
+> ℹ️ requirements.yml 은 **첫 줄 `---` 없이** 바로 `- name:` 부터 시작해도 됨 (실제 정답도 없음).
+> `---`는 YAML 문서 시작 표시라 있어도 동작은 하지만, 관례상 안 붙임.
 
 ### 설치 명령
 ```bash
