@@ -69,8 +69,11 @@ ansible-galaxy ______ roles/apache        ← init   (roles/apache 디렉토리 
 
 ### `roles/apache/templates/index.html.j2`
 ```jinja
-Hello Apache from {{ ansible_facts['hostname'] }} on {{ ansible_facts['default_ipv4']['address'] }}
+Hello Apache from {{ ansible_hostname }} on {{ ansible_default_ipv4.address }}
 ```
+> ⭐ **`setup` 출력에 보이는 이름 그대로(최상위 변수)** 쓰는 게 제일 안전.
+> ⚠️ `ansible_facts['ansible_hostname']` 처럼 **`ansible_facts` 안에 접두어까지 붙이면 undefined 에러**!
+> (같은 값 다른 표기: `{{ ansible_facts['hostname'] }}` = 접두어 뺀 버전 — 이것도 됨)
 
 ### `/home/user/ansible/run-role.yml` (호출 플레이북)
 ```yaml
