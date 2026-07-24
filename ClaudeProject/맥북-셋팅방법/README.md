@@ -84,6 +84,41 @@
 5. "디스플레이 회전을 유지하겠습니까?" 확인 창에서 **확인** 클릭 (15초 안에 확인 안 하면 원래대로 돌아감)
 6. 모니터 배치 정리: **디스플레이 설정 → 정렬**(Arrange)에서 모니터 아이콘을 드래그해 실제 책상 배치와 맞추기
 
+### 4-4. 스크린샷 저장 위치 변경
+
+기본은 **데스크탑**에 저장되는데, 바탕화면이 지저분해지므로 전용 폴더로 바꿔두면 좋다.
+
+**방법 1 — 스크린샷 앱에서 변경 (권장, 제일 쉬움)**
+
+1. `⌘ + Shift + 5` 를 눌러 스크린샷 도구 실행
+2. 하단 툴바에서 **"옵션"(Options)** 클릭
+3. **"다음으로 저장"(Save to)** 목록에서 원하는 위치 선택
+   - 기본 제공: 데스크탑, 문서, 클립보드, 메일, 메시지, 미리보기
+   - 다른 폴더로 하려면 **"기타 위치..."(Other Location...)** 클릭 후 폴더 선택 (예: `~/Screenshots` 폴더를 만들어서 지정)
+4. 선택하면 이후 모든 스크린샷(`⌘+Shift+3`, `⌘+Shift+4` 포함)이 그 위치에 저장됨
+
+**방법 2 — 터미널 명령어로 변경**
+
+```bash
+# 저장 폴더 먼저 생성 (예: 홈 아래 Screenshots)
+mkdir -p ~/Screenshots
+
+# 저장 위치 변경
+defaults write com.apple.screencapture location ~/Screenshots
+
+# 적용
+killall SystemUIServer
+```
+
+원래대로(데스크탑) 되돌리기:
+
+```bash
+defaults write com.apple.screencapture location ~/Desktop
+killall SystemUIServer
+```
+
+> 참고 단축키: `⌘+Shift+3` 전체 화면, `⌘+Shift+4` 영역 선택, `⌘+Shift+4` 후 `Space` 창 단위 캡처. `Ctrl` 을 함께 누르면 파일 저장 대신 클립보드로 복사된다.
+
 ---
 
 ## 추가로 해두면 좋은 것들 (선택)
