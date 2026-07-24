@@ -15,3 +15,4 @@
 - [보험-참고자료](보험-참고자료/) — 삼성생명 가족보험 약관·특약 분석용 참고자료
 - [공연업체-AgenticAI](공연업체-AgenticAI/) — 공연업체 Agentic AI 도입 플랜(개인정보 라우팅·내부 LLM·RAG)
 - [disclosure-watch](disclosure-watch/) — 공시 모니터링 도구(키워드 기반 diff 리포트, Node.js)
+- [맥북-셋팅방법](맥북-셋팅방법/) — 새 맥북 받았을 때 셋팅 체크리스트 (Chrome 프로필, OneDrive, 개인 앱, 디스플레이·마우스 설정)
