@@ -64,6 +64,7 @@ RHOAI_TOOLKIT_REF="${RHOAI_TOOLKIT_REF:-main}"
 INSTALL_RHOAI="${INSTALL_RHOAI:-true}"
 RHOAI_EXTRA_ARGS="${RHOAI_EXTRA_ARGS:-}"
 BASE_DOMAIN="${BASE_DOMAIN:-}"
+SINGLE_AZ="${SINGLE_AZ:-false}"
 
 export AWS_REGION AWS_DEFAULT_REGION="$AWS_REGION"
 [ -n "${AWS_ACCESS_KEY_ID:-}" ] && export AWS_ACCESS_KEY_ID
@@ -109,6 +110,45 @@ preflight() {
   fi
 
   if [ "$SKIP_OPENSHIFT" = false ]; then
+    # 이름 충돌 방지: 같은 도메인에 이미 api.<name> 레코드/클러스터가 있으면 중단
+    info "클러스터 이름 충돌 확인: ${CLUSTER_NAME}.${BASE_DOMAIN}"
+    local existing_clusters
+    existing_clusters="$(aws ec2 describe-instances \
+      --filters "Name=instance-state-name,Values=pending,running,stopping,stopped" \
+      --query 'Reservations[].Instances[].Tags[?starts_with(Key, `kubernetes.io/cluster/`)].Key' \
+      --output text 2>/dev/null | tr '\t' '\n' | sed 's#kubernetes.io/cluster/##' | sort -u | sed '/^$/d')"
+    if [ -n "$existing_clusters" ]; then
+      info "이 계정에 이미 존재하는 클러스터: $(echo "$existing_clusters" | tr '\n' ' ')"
+    fi
+    if echo "$existing_clusters" | grep -q "^${CLUSTER_NAME}-"; then
+      die "이미 '${CLUSTER_NAME}' 로 시작하는 클러스터가 이 계정에 있습니다.\n→ cluster.env 의 CLUSTER_NAME 을 다른 값으로 바꾸세요 (기존 클러스터와 도메인/리소스 충돌 방지)."
+    fi
+    local zone_id
+    zone_id="$(aws route53 list-hosted-zones --query "HostedZones[?Name=='${BASE_DOMAIN}.' && Config.PrivateZone==\`false\`].Id" --output text | head -1)"
+    if [ -n "$zone_id" ] && aws route53 list-resource-record-sets --hosted-zone-id "$zone_id" \
+         --query "ResourceRecordSets[?Name=='api.${CLUSTER_NAME}.${BASE_DOMAIN}.'].Name" --output text 2>/dev/null | grep -q .; then
+      die "Route53 에 이미 api.${CLUSTER_NAME}.${BASE_DOMAIN} 레코드가 있습니다.\n→ CLUSTER_NAME 을 다른 값으로 바꾸세요."
+    fi
+    ok "이름 충돌 없음: ${CLUSTER_NAME}.${BASE_DOMAIN}"
+
+    # EIP 쿼터 확인: 멀티 AZ 는 AZ 당 NAT(=EIP) 1개 필요. 부족하면 SINGLE_AZ 권장
+    local eip_q eip_used eip_free az_count need
+    eip_q="$(aws service-quotas get-service-quota --service-code ec2 --quota-code L-0263D0A3 --query 'Quota.Value' --output text 2>/dev/null | cut -d. -f1)"
+    eip_used="$(aws ec2 describe-addresses --query 'length(Addresses)' --output text 2>/dev/null)"
+    if [ -n "$eip_q" ] && [ -n "$eip_used" ]; then
+      eip_free=$(( eip_q - eip_used ))
+      [ "$SINGLE_AZ" = "true" ] && az_count=1 || az_count=3
+      need=$az_count
+      info "EIP: 쿼터 ${eip_q}, 사용중 ${eip_used}, 여유 ${eip_free}, 필요(신규 NAT) ${need}"
+      if [ "$eip_free" -lt "$need" ]; then
+        if [ "$SINGLE_AZ" = "true" ]; then
+          die "EIP 여유(${eip_free})가 부족합니다. 미사용 EIP 를 해제하거나 쿼터 상향이 필요합니다."
+        else
+          die "EIP 여유(${eip_free})가 멀티 AZ 필요치(${need})보다 부족합니다.\n→ cluster.env 에 SINGLE_AZ=true (NAT/EIP 1개) 를 설정하거나, 미사용 EIP 해제/쿼터 상향 하세요."
+        fi
+      fi
+    fi
+
     info "Pull secret 확인: $PULL_SECRET_PATH"
     [ -s "$PULL_SECRET_PATH" ] || die "Pull secret 파일이 없습니다: $PULL_SECRET_PATH\n→ https://console.redhat.com/openshift/install/pull-secret 에서 받아 저장하세요."
     jq -e '.auths' "$PULL_SECRET_PATH" >/dev/null 2>&1 || die "Pull secret 형식이 올바르지 않습니다 (JSON .auths 필요)."
@@ -161,9 +201,23 @@ generate_install_config() {
     die "이미 설치된 클러스터 디렉터리가 있습니다: $INSTALL_DIR\n→ 재사용하려면 --skip-openshift, 지우려면 ./destroy-cluster.sh 를 먼저 실행하세요."
   fi
   mkdir -p "$INSTALL_DIR"
-  local pull_secret ssh_key
+  local pull_secret ssh_key zones_block=""
   pull_secret="$(jq -c . "$PULL_SECRET_PATH")"
   ssh_key="$(cat "${SSH_KEY_PATH}.pub")"
+
+  # SINGLE_AZ=true → NAT/EIP 1개만 쓰도록 단일 가용영역으로 제한 (EIP 쿼터 절약)
+  local az_yaml_compute="" az_yaml_master=""
+  if [ "$SINGLE_AZ" = "true" ]; then
+    local az
+    az="$(aws ec2 describe-instance-type-offerings --location-type availability-zone --region "$AWS_REGION" \
+      --filters "Name=instance-type,Values=${WORKER_INSTANCE_TYPE}" \
+      --query 'InstanceTypeOfferings[0].Location' --output text 2>/dev/null)"
+    [ -n "$az" ] && [ "$az" != "None" ] || az="${AWS_REGION}a"
+    ok "SINGLE_AZ 모드: 가용영역 $az 하나만 사용 (NAT/EIP 1개)"
+    az_yaml_compute=$'\n      zones:\n      - '"$az"
+    az_yaml_master=$'\n      zones:\n      - '"$az"
+  fi
+
   cat >"$INSTALL_DIR/install-config.yaml" <<YAML
 apiVersion: v1
 baseDomain: ${BASE_DOMAIN}
@@ -182,13 +236,13 @@ compute:
       type: ${WORKER_INSTANCE_TYPE}
       rootVolume:
         size: 200
-        type: gp3
+        type: gp3${az_yaml_compute}
   replicas: ${WORKER_REPLICAS}
 controlPlane:
   name: master
   platform:
     aws:
-      type: ${MASTER_INSTANCE_TYPE}
+      type: ${MASTER_INSTANCE_TYPE}${az_yaml_master}
   replicas: ${MASTER_REPLICAS}
 networking:
   clusterNetwork:
