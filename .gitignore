@@ -10,3 +10,11 @@ Thumbs.db
 .vscode/
 .idea/
 *.swp
+
+# OpenShift AI 설치 산출물 — 비밀정보 포함, 절대 커밋 금지
+openshift-ai/cluster.env
+openshift-ai/*-install/
+openshift-ai/bin/
+openshift-ai/RHOAI-Toolkit/
+openshift-ai/cluster-info.txt
+pull-secret*
