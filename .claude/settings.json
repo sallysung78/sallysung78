@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__Google_Slides",
+      "mcp__Google_Drive",
+      "mcp__Google_Docs",
+      "mcp__Google_Sheets"
+    ]
+  }
+}
