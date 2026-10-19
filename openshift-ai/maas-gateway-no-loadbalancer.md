@@ -109,8 +109,25 @@ flowchart TD
 ### 공식 가이드 (기준점)
 
 - **MetalLB(LoadBalancer) 방식이 공식 가이드이자 기본 지원 구성**이다. 온프렘에서 MetalLB(BGP 또는 L2)로 Gateway 서비스에 외부 IP(VIP)를 할당하면 Router·수동 Route 없이 동작한다.
-  - 출처: [RHOAI 3.5 — Deploy and manage Models-as-a-Service](https://docs.redhat.com/en/documentation/red_hat_openshift_ai_self-managed/3.5/html/govern_llm_access_with_models-as-a-service/deploy-and-manage-models-as-a-service)
 - (A)·(B)는 **MetalLB를 쓸 수 없거나 미경험인 고객을 위한 우회 방법**이지, 공식 가이드가 아니다.
+
+#### 두 공식 문서의 관계 (중요)
+
+MetalLB 구성 근거는 **문서 한 개가 아니라 두 개가 역할을 나눠** 가진다.
+
+| 문서 | 역할 | 링크 |
+|---|---|---|
+| **RHOAI 3.5 — MaaS 배포 문서** | "MaaS Gateway는 **LoadBalancer가 필요**하다"는 전제·요구를 명시 (LB 구성법은 다루지 않음) | [바로가기](https://docs.redhat.com/en/documentation/red_hat_openshift_ai_self-managed/3.5/html/govern_llm_access_with_models-as-a-service/deploy-and-manage-models-as-a-service) |
+| **OCP 4.22 — MetalLB Operator** | "그 LoadBalancer IP를 **MetalLB로 이렇게 구성**한다"는 실제 설정 가이드 (설치·IPAddressPool·BGP/L2) | [바로가기](https://docs.redhat.com/en/documentation/openshift_container_platform/4.22/html/networking_operators/metallb-operator) |
+
+```
+MaaS 배포 문서  →  "Gateway에 LB 필요"      (무엇이 필요한가)
+      │  (LB provider 구성은 아래 문서로 위임)
+      ▼
+MetalLB Operator 문서  →  "그 LB를 MetalLB로 구성"   (어떻게 만드는가)
+```
+
+> 즉 **"MetalLB가 공식 가이드"**라고 할 때 근거는 **OCP MetalLB Operator 문서**이고, MaaS 배포 문서는 그 **LB가 필요하다는 전제**를 주는 문서다. 두 문서를 함께 봐야 공식 경로가 완성된다.
 
 ### (B) 우회 방법의 한계점 (명확히)
 
@@ -165,7 +182,9 @@ flowchart TD
 
 ## 참고 자료
 
-- RHOAI 3.5 — Govern LLM access with Models-as-a-Service (공식 문서)
+- OCP 4.22 — MetalLB Operator (MetalLB 공식 구성 가이드)
+  https://docs.redhat.com/en/documentation/openshift_container_platform/4.22/html/networking_operators/metallb-operator
+- RHOAI 3.5 — Govern LLM access with Models-as-a-Service (MaaS가 LB를 요구하는 근거)
   https://docs.redhat.com/en/documentation/red_hat_openshift_ai_self-managed/3.5/html/govern_llm_access_with_models-as-a-service/deploy-and-manage-models-as-a-service
 - opendatahub-io/models-as-a-service Issue #331 — Deploy script stalls on SNO/bare-metal, LB address not assigned
   https://github.com/opendatahub-io/models-as-a-service/issues/331
