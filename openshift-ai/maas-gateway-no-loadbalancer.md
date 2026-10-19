@@ -2,7 +2,7 @@
 
 > **대상**: Red Hat OpenShift AI (RHOAI) Self-Managed **3.5** / OpenShift **4.22**
 > **주제**: MaaS(Models-as-a-Service) Gateway를 **MetalLB(LoadBalancer) 없이** 외부로 노출하는 방법과 그 한계
-> **최종 업데이트**: 2026-10-16
+> **최종 업데이트**: 2026-10-19
 
 ---
 
@@ -15,6 +15,26 @@
 ### 고객 상황 (우리은행 사례)
 1. 초기에 **MetalLB(BGP)** 를 검토했으나, **SLB를 Gateway로 쓰는 IP 대역에 이미 VM들이 배치**되어 있어 BGP 구성이 어려웠다.
 2. 내부 사정으로 MetalLB 방안을 **드롭**하고 다른 방안을 찾게 되었다.
+
+---
+
+## 📌 팀 표준 LB 구성안 (2가지, 공식문서 기준)
+
+MaaS 구성 시 LoadBalancer 노출은 **아래 2개 안을 표준으로** 가져간다.
+
+### 안 1 — MetalLB (기본 권장)
+- **근거(공식)**: [Gateway API 제약](https://docs.redhat.com/en/documentation/openshift_container_platform/4.22/html/ingress_and_load_balancing/configuring-gateway-api) — 온프렘은 LB 자동 없음 → MetalLB 필수 / 구성법은 [MetalLB Operator](https://docs.redhat.com/en/documentation/openshift_container_platform/4.22/html/networking_operators/metallb-operator)
+- **방식**: MetalLB가 Gateway 서비스에 외부 IP(VIP) 할당 → Router·수동 Route 불필요
+  - **BGP 모드**(상위 라우터와 피어링) 또는 **L2(ARP) 모드**(BGP 불가 시 대안, 둘 다 지원)
+- **공통 작업**: **DNS를 게이트웨이 주소(VIP)에 수동 매핑** (온프렘 Gateway API 공통)
+- **상태**: ✅ **공식 지원 / 기본 권장**
+
+### 안 2 — MetalLB를 쓸 수 없는 경우
+- **방식**: Gateway를 ClusterIP로 두고 **OpenShift Route로 노출** (우리은행식: L4 → Router → Route passthrough)
+- **공식 근거의 범위**: **Route 노출 자체는 [MaaS 문서](https://docs.redhat.com/en/documentation/red_hat_openshift_ai_self-managed/3.5/html/govern_llm_access_with_models-as-a-service/deploy-and-manage-models-as-a-service)에 명시**되나, **Gateway ClusterIP 전환(`gw-options`)은 공식 문서 밖(커뮤니티 기반) 우회**
+- **상태**: ⚠️ **우회 방법** — 적용 전 Support에 지원 여부 확인 필요. 정식 지원은 [RFE OCPSTRAT-3781](https://issues.redhat.com/browse/OCPSTRAT-3781)로 추진 중
+
+> **정리**: **안 1(MetalLB)이 공식·기본**, **안 2는 MetalLB 불가 시의 우회**. 안 1의 대내외 우려사항(경험 부족·망/IP 제약·네트워크팀 협업·DNS 작업 등)은 **매니저 통해 에스컬레이션**한다.
 
 ---
 
@@ -111,23 +131,32 @@ flowchart TD
 - **MetalLB(LoadBalancer) 방식이 공식 가이드이자 기본 지원 구성**이다. 온프렘에서 MetalLB(BGP 또는 L2)로 Gateway 서비스에 외부 IP(VIP)를 할당하면 Router·수동 Route 없이 동작한다.
 - (A)·(B)는 **MetalLB를 쓸 수 없거나 미경험인 고객을 위한 우회 방법**이지, 공식 가이드가 아니다.
 
-#### 두 공식 문서의 관계 (중요)
+#### 공식 문서 3개의 관계 (중요)
 
-MetalLB 구성 근거는 **문서 한 개가 아니라 두 개가 역할을 나눠** 가진다.
+MetalLB 구성 근거는 **문서 한 개가 아니라 세 개가 역할을 나눠** 가진다. 가장 권위 있는 근거는 **Gateway API 공식 제약**이다.
 
 | 문서 | 역할 | 링크 |
 |---|---|---|
+| **OCP 4.22 — Gateway API 제약(Limitations)** | 온프렘(베어메탈/vSphere)은 LB 자동 프로비저닝·DNS 자동 관리를 **하지 않으므로**, Gateway API를 쓰려면 **반드시 MetalLB 같은 LB 컨트롤러를 배포하고 DNS를 게이트웨이 주소에 수동 매핑**해야 한다고 명시 | [바로가기](https://docs.redhat.com/en/documentation/openshift_container_platform/4.22/html/ingress_and_load_balancing/configuring-gateway-api) |
 | **RHOAI 3.5 — MaaS 배포 문서** | "MaaS Gateway는 **LoadBalancer가 필요**하다"는 전제·요구를 명시 (LB 구성법은 다루지 않음) | [바로가기](https://docs.redhat.com/en/documentation/red_hat_openshift_ai_self-managed/3.5/html/govern_llm_access_with_models-as-a-service/deploy-and-manage-models-as-a-service) |
 | **OCP 4.22 — MetalLB Operator** | "그 LoadBalancer IP를 **MetalLB로 이렇게 구성**한다"는 실제 설정 가이드 (설치·IPAddressPool·BGP/L2) | [바로가기](https://docs.redhat.com/en/documentation/openshift_container_platform/4.22/html/networking_operators/metallb-operator) |
 
 ```
-MaaS 배포 문서  →  "Gateway에 LB 필요"      (무엇이 필요한가)
+Gateway API 제약  →  "온프렘은 LB 자동 없음 → MetalLB 필수 + DNS 수동 매핑"  (왜 MetalLB인가, 가장 권위)
+      │
+MaaS 배포 문서    →  "Gateway에 LB 필요"                                 (무엇이 필요한가)
       │  (LB provider 구성은 아래 문서로 위임)
       ▼
-MetalLB Operator 문서  →  "그 LB를 MetalLB로 구성"   (어떻게 만드는가)
+MetalLB Operator  →  "그 LB를 MetalLB로 구성"                            (어떻게 만드는가)
 ```
 
-> 즉 **"MetalLB가 공식 가이드"**라고 할 때 근거는 **OCP MetalLB Operator 문서**이고, MaaS 배포 문서는 그 **LB가 필요하다는 전제**를 주는 문서다. 두 문서를 함께 봐야 공식 경로가 완성된다.
+> **"MetalLB가 공식 가이드"의 가장 강한 근거 = Gateway API 공식 제약**이다. MaaS는 이 Gateway API 위에 올라가므로 이 제약이 그대로 적용된다.
+
+#### DNS 수동 매핑이란? (온프렘 공통)
+
+- 클라우드에서는 LB를 만들면 DNS가 자동으로 그 주소를 가리키도록 연동된다(external-dns 등). **온프렘 Gateway API는 그런 자동 연동이 없다.**
+- 그래서 MetalLB가 게이트웨이에 VIP(예: `10.x.x.x`)를 할당하면, **운영자가 사내 DNS에 직접** `api.maas.example.com → 10.x.x.x` 같은 **A 레코드를 손으로 등록**해야 한다. 이것이 "DNS를 게이트웨이 주소에 수동 매핑"의 의미다.
+- **중요**: 이 DNS 수동 작업은 **우리은행식 우회뿐 아니라 MetalLB 정식 경로에서도 동일하게 필요**하다. 즉 온프렘은 어느 경로든 최소한의 수동 작업이 따른다.
 
 ### (B) 우회 방법의 한계점 (명확히)
 
@@ -182,6 +211,8 @@ MetalLB Operator 문서  →  "그 LB를 MetalLB로 구성"   (어떻게 만드�
 
 ## 참고 자료
 
+- OCP 4.22 — Configuring Gateway API / Limitations (온프렘은 MetalLB 필수 + DNS 수동 매핑 명시)
+  https://docs.redhat.com/en/documentation/openshift_container_platform/4.22/html/ingress_and_load_balancing/configuring-gateway-api
 - OCP 4.22 — MetalLB Operator (MetalLB 공식 구성 가이드)
   https://docs.redhat.com/en/documentation/openshift_container_platform/4.22/html/networking_operators/metallb-operator
 - RHOAI 3.5 — Govern LLM access with Models-as-a-Service (MaaS가 LB를 요구하는 근거)
