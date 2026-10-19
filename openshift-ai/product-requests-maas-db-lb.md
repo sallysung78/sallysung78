@@ -83,14 +83,14 @@
 ### 3가지 구성 요약
 | | Gateway 서비스 | pending | 지원 여부 |
 |---|---|---|---|
-| **① MetalLB (BGP/L2)** | LoadBalancer | 없음 | ✅ 공식 기본·지원 |
-| **② 우리은행 현재** (L4→Router→Route) | ClusterIP (gw-options 수동) | 없음 | ⚠️ 미지원 → Support Exception |
+| **① MetalLB (BGP/L2)** | LoadBalancer | 없음 | ✅ **공식 가이드·기본 지원** |
+| **② 우리은행 현재** (L4→Router→Route) | ClusterIP (gw-options 수동) | 없음 | ⚠️ 우회 방법 (공식 가이드 아님) → Support 확인 |
 | **③ RFE 후** | ClusterIP (네이티브) | 없음 | ✅ 정식 지원 (추진 중) |
 
 ### 요청
 1. **공식 가이드 문서화** — "LoadBalancer(MetalLB)를 쓸 수 없는 환경"을 위한 **지원되는 구성 절차**를 공식 문서로 제공.
    - 현재 공식 문서는 "LB 없으면 OpenShift Route 사용"만 명시 → pending 처리, Route 수동/자동 여부 등 **구체 절차·지원 범위가 불명확**.
-2. **ClusterIP 정식 지원 (RFE OCPSTRAT-3781) 우선순위 상향** — 다수 금융 고객이 대기 중. GA 목표 시점 공유 요청.
+2. **ClusterIP 정식 지원 ([RFE OCPSTRAT-3781](https://issues.redhat.com/browse/OCPSTRAT-3781)) 우선순위 상향** — 이 RFE의 목적은 **MetalLB를 쓸 수 없는 고객의 우회 방법(ClusterIP 전환)을 제품 기본 기능으로 끌어올려 정식 지원되게** 하는 것. 다수 금융 고객이 대기 중 → GA 목표 시점 공유 요청.
 3. **MetalLB L2 모드 가이드 보강** — BGP가 어려운 고객을 위한 L2(ARP) 모드 구성 가이드.
 
 ### Product 팀에 드리는 질문
