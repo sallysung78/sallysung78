@@ -4,6 +4,8 @@
 > 구성: control 1대 + managed 5대 (node1~5). node3·4는 webservers(부하분산용).
 
 ## 📂 파일
+- `provision-aws.sh` — **AWS CloudShell에서** 인스턴스 6대+SG+키 한 번에 생성
+- `teardown-aws.sh` — **AWS CloudShell에서** 인스턴스 정리(과금 방지)
 - `control-setup.sh` — control 노드에 Ansible·검증도구·컬렉션·시스템롤 설치
 - `bootstrap.yml` — 모든 노드에 devops 유저·SSH키·/etc/hosts 세팅 (+ node3에 LVM용 vg)
 - `ansible.cfg` — 작업 디렉토리용 설정 템플릿
@@ -19,6 +21,17 @@
 - 보안그룹: SSH 22 / HTTP 80 / ICMP
 - managed(특히 node3)에 **빈 EBS 디스크** 1개 추가 (→ LVM 10번 / vdb 14번)
 - (BYOS면) 각 노드 `sudo subscription-manager register ...` 로 repo 활성화
+
+### 0.5) 인스턴스 생성 — AWS CloudShell에서 (가장 쉬움)
+> 로컬/세션에서 키 쓰지 말고 **콘솔 CloudShell**에서. 키·권한 이미 있고 바로 됨.
+```bash
+# 웹 콘솔 로그인 → 우상단 CloudShell(>_) 아이콘 클릭 → 아래 실행
+curl -O <provision-aws.sh 내용 붙여넣기 or 업로드>   # 또는 내용 복붙
+bash provision-aws.sh          # 6대 생성 + IP 출력
+# 끝나면 정리: bash teardown-aws.sh
+```
+- 출력된 **control PublicIP** 로 접속, **각 노드 PrivateIP** 를 inventory에 기입
+- 생성된 `~/ex294-key.pem` 은 CloudShell **Actions > Download file** 로 받아 보관
 
 ### 1) control 노드에서
 ```bash
