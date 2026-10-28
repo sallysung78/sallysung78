@@ -3,8 +3,18 @@
 > AWS에 RHEL 9 인스턴스를 받으면 **이 폴더 파일들을 복붙**해서 빠르게 연습환경을 만든다.
 > 구성: control 1대 + managed 5대 (node1~5). node3·4는 webservers(부하분산용).
 
+## ⭐ 원클릭 (추천): AWS CloudShell에서 `lab-up.sh`
+> 콘솔 로그인 → CloudShell(`>_`) → 아래 한 줄 → 기다리면 끝.
+> 인스턴스 6대 생성 + control에 ansible/컬렉션 설치 + inventory 자동작성 + ping + node3 vg까지 자동.
+```bash
+curl -sL "https://raw.githubusercontent.com/sallysung78/sallysung78/claude/github-project-folders-lg9ms6/ClaudeProject/%EA%B3%B5%EB%B6%80/EX294/%EC%8B%9C%ED%97%98%ED%99%98%EA%B2%BD/lab-up.sh" -o lab-up.sh
+bash lab-up.sh
+```
+끝나면 출력된 명령으로 접속: `ssh -i ~/ex294-key.pem ec2-user@<control_IP>` → `cd ~/ansible` → 문제풀이.
+
 ## 📂 파일
-- `provision-aws.sh` — **AWS CloudShell에서** 인스턴스 6대+SG+키 한 번에 생성
+- `lab-up.sh` — ⭐ **원클릭**: 생성+control설정+inventory+ping 전부
+- `provision-aws.sh` — (수동 변형) 인스턴스 6대+SG+키만 생성
 - `teardown-aws.sh` — **AWS CloudShell에서** 인스턴스 정리(과금 방지)
 - `control-setup.sh` — control 노드에 Ansible·검증도구·컬렉션·시스템롤 설치
 - `bootstrap.yml` — 모든 노드에 devops 유저·SSH키·/etc/hosts 세팅 (+ node3에 LVM용 vg)
