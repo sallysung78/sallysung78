@@ -1,0 +1,11 @@
+" ~/.vimrc — EX294 연습용 (탭/들여쓰기 실수 예방)
+" YAML은 탭 금지 → 탭을 스페이스로, 탭이 보이게
+set expandtab          " 탭 → 스페이스
+set shiftwidth=2       " 자동 들여쓰기 2칸
+set softtabstop=2      " 탭 키 = 2칸
+set autoindent         " 윗줄 들여쓰기 유지
+set list listchars=tab:▸·,trail:·   " 탭·끝공백 보이게
+syntax on
+set number             " 줄번호
+" YAML 파일에서 2칸 들여쓰기 강제
+autocmd FileType yaml setlocal ts=2 sts=2 sw=2 expandtab

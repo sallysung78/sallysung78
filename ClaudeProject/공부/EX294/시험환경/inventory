@@ -1,0 +1,19 @@
+# inventory — EX294 연습용 템플릿
+# 각 node의 <...ip> 자리에 AWS 사설 IP(또는 /etc/hosts 이름) 입력
+# ※ 인벤토리 파일 첫 줄에 --- 없음!
+
+[dev]
+node1 ansible_host=<node1_ip>
+
+[test]
+node2 ansible_host=<node2_ip>
+
+[prod]
+node3 ansible_host=<node3_ip>
+node4 ansible_host=<node4_ip>
+
+[balancers]
+node5 ansible_host=<node5_ip>
+
+[webservers:children]
+prod

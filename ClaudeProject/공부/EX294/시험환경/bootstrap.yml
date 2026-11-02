@@ -1,0 +1,60 @@
+---
+# bootstrap.yml — 모든 managed 노드 초기 세팅
+# 최초 1회: ec2-user로 접속해 devops 유저·SSH키·/etc/hosts 세팅
+# 실행: ansible-playbook bootstrap.yml -u ec2-user --key-file ~/.ssh/id_ed25519 -b
+#
+# ※ 이 플레이북은 "연습환경 준비"용. (시험 문제 아님)
+
+- name: Bootstrap all managed nodes
+  hosts: all
+  become: true
+  vars:
+    work_user: devops
+    # control의 공개키 (실행 전 경로 확인; 기본 ed25519)
+    pubkey_path: ~/.ssh/id_ed25519.pub
+  tasks:
+    - name: Create work user
+      ansible.builtin.user:
+        name: "{{ work_user }}"
+        groups: wheel
+        append: true
+        shell: /bin/bash
+
+    - name: Passwordless sudo for work user
+      ansible.builtin.copy:
+        dest: "/etc/sudoers.d/{{ work_user }}"
+        content: "{{ work_user }} ALL=(ALL) NOPASSWD:ALL\n"
+        mode: "0440"
+        validate: "visudo -cf %s"
+
+    - name: Install control public key for work user
+      ansible.posix.authorized_key:
+        user: "{{ work_user }}"
+        state: present
+        key: "{{ lookup('file', pubkey_path) }}"
+
+    - name: Ensure python3 present (Ansible 모듈용)
+      ansible.builtin.dnf:
+        name: python3
+        state: present
+
+    - name: /etc/hosts — 노드 이름 매핑 (inventory_hostname → IP)
+      ansible.builtin.lineinfile:
+        path: /etc/hosts
+        regexp: "\\s{{ item }}$"
+        line: "{{ hostvars[item].ansible_host | default(hostvars[item].ansible_default_ipv4.address) }} {{ item }}"
+      loop: "{{ groups['all'] }}"
+
+# ── LVM 연습용(10번·14번): node3에만 research vg 미리 생성 ──
+# node3 = vg 있음(defined 분기), node4 = vg 없음(undefined 분기) 둘 다 테스트 가능
+- name: Prepare LVM for storage practice (node3 only)
+  hosts: node3
+  become: true
+  vars:
+    extra_disk: /dev/nvme1n1   # ★ AWS 추가 EBS 장치명 확인 후 수정 (lsblk)
+  tasks:
+    - name: Create volume group 'research'
+      community.general.lvg:
+        vg: research
+        pvs: "{{ extra_disk }}"
+      ignore_errors: true   # 디스크 장치명이 다르면 skip; lsblk로 확인 후 수정
