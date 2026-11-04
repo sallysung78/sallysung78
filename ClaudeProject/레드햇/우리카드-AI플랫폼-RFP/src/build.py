@@ -253,6 +253,7 @@ def md():
     a("- 기존 MaaS·DB·Gateway LB 제품 요청 정리: `openshift-ai/product-requests-maas-db-lb.md` (branch `claude/admiring-fermat-mqr4q4`)")
     a("- RFE OCPSTRAT-3781 (MaaS Gateway ClusterIP 정식 지원): https://issues.redhat.com/browse/OCPSTRAT-3781")
     a("- OpenShift AI 3.5 MaaS 문서: https://docs.redhat.com/en/documentation/red_hat_openshift_ai_self-managed/3.5/html/govern_llm_access_with_models-as-a-service/deploy-and-manage-models-as-a-service")
+    a("- 재생성: `src/rfp_data.py`(요건 41건 단일 데이터)를 수정한 뒤 `cd src && python3 build.py ..` 실행 → README.md·엑셀 동시 갱신")
     a("")
     return "\n".join(L)
 
